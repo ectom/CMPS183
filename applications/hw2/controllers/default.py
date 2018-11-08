@@ -43,6 +43,15 @@ def index():
 @auth.requires_login()
 def add_reply():
     """COMPLETE (and remove line below or replace as appropriate)"""
+    db.reply.reply_author.readable = False
+    db.reply.reply_author.writable = False
+    db.reply.post_id.readable = False
+    db.reply.post_id.writable = False
+    db.reply.reply_time.readable = False
+    db.reply.reply_time.writable = False
+    db.reply.id.readable = False
+    db.reply.id.writable = False
+    
     form = SQLFORM(db.reply)
     form.vars.post_id = request.args[0]
     # We can process the form.  This will check that the request is a POST,
@@ -59,10 +68,14 @@ def add_reply():
 @auth.requires_signature()
 def edit_reply():
     # For this controller only, we hide the author.
-    db.reply.reply_author.readable = True
+    db.reply.reply_author.readable = False
     db.reply.reply_author.writable = False
+    db.reply.post_id.readable = False
     db.reply.post_id.writable = False
+    db.reply.reply_time.readable = False
     db.reply.reply_time.writable = False
+    db.reply.id.readable = False
+    db.reply.id.writable = False
 
     reply = db.reply(request.args(0))
     # We must validate everything we receive.
