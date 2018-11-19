@@ -73,10 +73,8 @@ def edit_post():
     id = int(request.vars.id)
     title = request.vars.post_title
     content = request.vars.post_content
-    print content
-    print auth
-    db.post.update_or_insert(
-        (db.post.id == id) & (db.post.post_author == auth.user.email),
+    print id
+    db((db.post.id == id) & (db.post.post_author == auth.user.email)).update(
         post_title = title,
         post_conent = content
     )
@@ -94,3 +92,16 @@ def editable():
         return True
     else:
         return False
+
+@auth.requires_signature()
+def set_reply():
+    id = request.vars.id
+    reply = request.vars.reply
+    print id
+    # _or_insert
+    reply_id = db.reply.update_or_insert(
+        (reply != ""),
+        post_id = id,
+        reply_content = reply
+    )
+    return response.json(dict(reply_id=reply_id))

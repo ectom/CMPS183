@@ -5,15 +5,15 @@
 <script>
     var add_post_url = "{{=URL('api', 'add_post', user_signature=True)}}";
     var get_post_list_url = "{{=URL('api', 'get_post_list')}}";
-    // Like callbacks.
-    var set_like_url = "{{=URL('api', 'set_like', user_signature=True)}}";
-    var get_likers_url = "{{=URL('api', 'get_likers')}}"
-    // Stars.
+    // Thumbs.
     var set_thumb_url = "{{=URL('api', 'set_thumb', user_signature=True)}}";
     var get_thumbs_url = "{{=URL('api', 'get_thumbs', user_signature=True)}}";
-
+    // Edits
     var edit_post_url = "{{=URL('api', 'edit_post', user_signature=True)}}";
     var editable_url = "{{=URL('api', 'editable')}}";
+    // Replies
+    var set_reply_url = "{{=URL('api', 'set_reply', user_signature=True)}}";
+
 
     var is_logged_in = {{='false' if auth.user is None else 'true'}};
 </script>
@@ -77,7 +77,7 @@
                 <div v-if="is_logged_in" class="">
                     <button v-if='!post._editing && editable(post._idx)'  v-on:click="edit(post._idx)" type="button" name="button"><i class="fa fa-pencil-square-o"></i> Edit Post</button>
                     <button v-if='post._editing' v-on:click="edited(post._idx)" type="button" name="button">Done Editing</button>
-                    <button v-if='!post._editing' v-on:click="" type="button" name="button"><i class="fa fa-reply"></i> Reply to Post</button>
+                    <button v-if='!post._editing' v-on:click="reply(post._idx)" type="button" name="button"><i class="fa fa-reply"></i> Reply to Post</button>
                 </div>
                 <div v-if="is_logged_in" class="attributes inline">
 
@@ -97,6 +97,27 @@
                         </span>
                     </span>
                     <strong>${post._total}</strong>
+                </div>
+                <div v-if="post._show_replies" class="replies">
+
+                </div>
+                <!-- Form for replying to a post -->
+                <div v-if="post._replying" class="reply_form">
+                    <div class="container form_row">
+                        <div class="label">
+                            Reply:
+                        </div>
+                        <div class="form threequarters">
+                            <textarea v-model="reply_content" placeholder="Reply to post"></textarea>
+                        </div>
+                    </div>
+                    <div class="container form_row">
+                        <div class="threequarters">
+                            <div class="submit">
+                                <button id="add-reply" v-on:click="set_reply(post._idx)">Reply</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

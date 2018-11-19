@@ -86,15 +86,11 @@ var app = function() {
         // We initialize the smile status to match the like.
 
         self.vue.post_list.map(function (e) {
-            // I need to use Vue.set here, because I am adding a new watched attribute
-            // to an object.  See https://vuejs.org/v2/guide/list.html#Object-Change-Detection-Caveats
-            // The code below is commented out, as we don't have smiles any more.
-            // Replace it with the appropriate code for thumbs.
-            // // Did I like it?
-            // // If I do e._smile = e.like, then Vue won't see the changes to e._smile .
-            // Vue.set(e, '_smile', e.like);
-            Vue.set(e, '_editing', false);
-            Vue.set(e, '_editable');
+            Vue.set(e, '_reply_list', []);
+            Vue.set(e, '_editing', false); // keeps track of wether or not a post is being edited
+            Vue.set(e, '_editable'); // keeps track of who is allowed to edit a post
+            Vue.set(e, '_replying', false); // keeps track of wether or not reply form is shown
+            Vue.set(e, '_show_replies', false); // keeps track of the show reply button
             Vue.set(e, '_total'); //keeps track of total likes vs dislikes
             Vue.set(e, '_gray_thumb'); //keeps track of when thumbs are supposed to be gray
             Vue.set(e, '_num_thumb_display'); //keeps track of thumbs while hoverings
@@ -207,10 +203,9 @@ var app = function() {
     self.edited = function(post_id){
         var p = self.vue.post_list[post_id];
         p._editing = false;
-        console.log('edited', p.post_content);
         $.post(edit_post_url,
             {
-                id: post_id,
+                id: p.id,
                 post_title: p.post_title,
                 post_content: p.post_content
             },
@@ -238,6 +233,43 @@ var app = function() {
         return post._editable;
     }
 
+    self.reply = function (post_id) {
+        var post = self.vue.post_list[post_id]
+        post._replying = true;
+    }
+
+    self.set_reply = function (post_id) {
+        var id = post_id
+        var post = self.vue.post_list[post_id];
+        var sent_content = self.vue.reply_content; // Makes a copy
+        post._replying = false;
+
+        $.post(set_reply_url,
+        {
+            id: post.id,
+            reply: self.vue.reply_content
+        }, function (data) {
+            console.log(data);
+            // Clears the form.
+            self.vue.reply_content = "";
+            // Adds the post to the list of posts.
+            var new_reply = {
+                id: data.reply_id,
+                reply_content: sent_content
+            };
+            post._reply_list.push(new_reply);
+            // We re-enumerate the array.
+            self.process_replies(post_id);
+        });
+
+    }
+
+    self.process_replies = function(post_id) {
+        // We add the _idx attribute to the posts.
+        var post = self.vue.post_list[post_id]
+        enumerate(post._reply_list);
+    };
+
     // Complete as needed.
     self.vue = new Vue({
         el: "#vuediv",
@@ -249,7 +281,7 @@ var app = function() {
             post_list: [],
             thumbs_list: [],
             isHidden: true,
-            // _editing: false
+            reply_content: ""
         },
         methods: {
             add_post: self.add_post,
@@ -262,6 +294,8 @@ var app = function() {
             thumbs_up_out: self.thumbs_up_out,
             thumbs_down_out: self.thumbs_down_out,
             set_thumb: self.set_thumb,
+            reply: self.reply,
+            set_reply: self.set_reply
         }
 
     });
