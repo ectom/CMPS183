@@ -50,6 +50,7 @@
                 <div class="threequarters">
                     <div class="submit">
                         <button id="add-post" v-on:click="add_post">Submit</button>
+                        <button v-on:click="hide">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -93,19 +94,23 @@
                     </span>
                     <strong>${post._total}</strong>
                 </div>
+                <!-- buttons underneath the post -->
                 <div v-if="is_logged_in" class="">
-                    <!-- editable(post._idx) -->
                     <button v-if='!post._editing && editable(post._idx)'  v-on:click="edit(post._idx)" type="button" name="button"><i class="fa fa-pencil-square-o"></i> Edit Post</button>
                     <button v-if='post._editing' v-on:click="edited(post._idx)" type="button" name="button">Done Editing</button>
                     <button v-if='!post._editing' v-on:click="reply(post._idx)" type="button" name="button"><i class="fa fa-reply"></i> Reply to Post</button>
                     <button v-if='!post._show_replies' v-on:click="show_replies(post._idx)" type="button" name="button"> Show All Replies</button>
+                    <button v-if='post._show_replies' v-on:click="hide_replies(post._idx)" type="button" name="button"> Hide All Replies</button>
                 </div>
                 <!-- shows all replies for a post -->
                 <div v-if="post._show_replies" class="replies">
                     <div v-if="post._reply_list.length > 0" v-for="reply in post._reply_list">
-                        <div class="reply_row">
-                            ${reply.reply_content}
-                            <span class="author_time">By ${reply.reply_author} at ${reply.reply_time}</span>
+                        <div class="">
+                            <div class="reply_row inline">
+                                ${reply.reply_content}
+                                <span class="author_time">By ${reply.reply_author} at ${reply.reply_time}</span>
+                            </div>
+                            <div class="inline"><button v-on:click="edit_reply(post._idx, reply.id)" type="button" name="button"><i class="fa fa-pencil-square-o"></i> Edit Reply</button></div>
                         </div>
                     </div>
                     <div v-if="post._reply_list.length === 0" class="reply_row">There are no replies</div>
@@ -125,6 +130,7 @@
                         <div class="threequarters">
                             <div class="submit">
                                 <button id="add-reply" v-on:click="set_reply(post._idx)">Reply</button>
+                                <button v-on:click="cancel_reply(post._idx)">Cancel</button>
                             </div>
                         </div>
                     </div>

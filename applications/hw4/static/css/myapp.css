@@ -32,7 +32,7 @@ div.main_content span.likers_list {
   color: #7777cc;
 }
 .inline{
-    display: inline;
+    display: inline-block;
 }
 .thumbs{
     color: transparent;
@@ -49,6 +49,7 @@ div.main_content span.likers_list {
     padding: 0.5% 0.5% 0.5% 0.5%;
     margin-left: 4%;
     max-width: 750px;
+    min-width: 750px;
     margin-bottom: 0.5%;
 }
 .author_time{

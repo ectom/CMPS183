@@ -47,7 +47,7 @@ var app = function() {
                 self.process_posts();
             });
         // If you put code here, it is run BEFORE the call comes back.
-        hide();
+        self.hide();
     };
 
     self.get_thumbs = function(){
@@ -153,7 +153,7 @@ var app = function() {
         }
     };
 
-    function hide(){
+    self.hide = function(){
         if(!self.vue.isHidden){
             self.vue.isHidden = true;
         }
@@ -287,6 +287,20 @@ var app = function() {
 
         )
     }
+
+    self.hide_replies = function(post_id){
+        var post = self.vue.post_list[post_id];
+        post._show_replies = false;
+    }
+
+    self.cancel_reply = function (post_id) {
+        var post = self.vue.post_list[post_id]
+        post._replying = false;
+    }
+
+    self.edit_reply = function (post_id, reply_id) {
+        console.log(reply_id);
+    }
     // Complete as needed.
     self.vue = new Vue({
         el: "#vuediv",
@@ -302,10 +316,14 @@ var app = function() {
         },
         methods: {
             add_post: self.add_post,
+            cancel_reply: self.cancel_reply,
             editable: self.editable,
             show: self.show,
             edit: self.edit,
             edited: self.edited,
+            edit_reply: self.edit_reply,
+            hide: self.hide,
+            hide_replies: self.hide_replies,
             thumbs_up_over: self.thumbs_up_over,
             thumbs_down_over: self.thumbs_down_over,
             thumbs_up_out: self.thumbs_up_out,
