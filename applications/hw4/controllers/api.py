@@ -73,18 +73,12 @@ def edit_post():
     id = int(request.vars.id)
     title = request.vars.post_title
     content = request.vars.post_content
-    print id
+    print id, title, content
     db((db.post.id == id) & (db.post.post_author == auth.user.email)).update(
         post_title = title,
-        post_conent = content
+        post_content = content
     )
-    # row.post_title = title
-    # row.update_record()
-    # row.post_conent = content
-    # row.update_record()
-    # We return the id of the new post, so we can insert it along all the others.
-    # return response.json(dict(row=row))
-    return "ok"
+    return "edit complete"
 
 def editable():
     author = request.vars.author
@@ -104,4 +98,10 @@ def set_reply():
         post_id = id,
         reply_content = reply
     )
-    return response.json(dict(reply_id=reply_id))
+    reply = db((db.reply.id == reply_id)).select()
+    return response.json(dict(reply=reply))
+
+def get_replies():
+    id = request.vars.post_id
+    replies = db((db.reply.post_id == id)).select()
+    return response.json(dict(replies=replies))

@@ -13,7 +13,7 @@
     var editable_url = "{{=URL('api', 'editable')}}";
     // Replies
     var set_reply_url = "{{=URL('api', 'set_reply', user_signature=True)}}";
-
+    var get_replies_url = "{{=URL('api', 'get_replies')}}";
 
     var is_logged_in = {{='false' if auth.user is None else 'true'}};
 </script>
@@ -74,13 +74,8 @@
                     Edit Post
                     <textarea v-model="post.post_content"></textarea>
                 </div>
-                <div v-if="is_logged_in" class="">
-                    <button v-if='!post._editing && editable(post._idx)'  v-on:click="edit(post._idx)" type="button" name="button"><i class="fa fa-pencil-square-o"></i> Edit Post</button>
-                    <button v-if='post._editing' v-on:click="edited(post._idx)" type="button" name="button">Done Editing</button>
-                    <button v-if='!post._editing' v-on:click="reply(post._idx)" type="button" name="button"><i class="fa fa-reply"></i> Reply to Post</button>
-                </div>
-                <div v-if="is_logged_in" class="attributes inline">
 
+                <div v-if="is_logged_in" class="attributes ">
                     <!-- Code for Thumbs. -->
                     <span v-on:mouseout="thumbs_up_out(post._idx)">
                         <span v-on:mouseover="thumbs_up_over(post._idx, post.id)"
@@ -98,7 +93,22 @@
                     </span>
                     <strong>${post._total}</strong>
                 </div>
+                <div v-if="is_logged_in" class="">
+                    <!-- editable(post._idx) -->
+                    <button v-if='!post._editing && editable(post._idx)'  v-on:click="edit(post._idx)" type="button" name="button"><i class="fa fa-pencil-square-o"></i> Edit Post</button>
+                    <button v-if='post._editing' v-on:click="edited(post._idx)" type="button" name="button">Done Editing</button>
+                    <button v-if='!post._editing' v-on:click="reply(post._idx)" type="button" name="button"><i class="fa fa-reply"></i> Reply to Post</button>
+                    <button v-if='!post._show_replies' v-on:click="show_replies(post._idx)" type="button" name="button"> Show All Replies</button>
+                </div>
+                <!-- shows all replies for a post -->
                 <div v-if="post._show_replies" class="replies">
+                    <div v-if="post._reply_list.length > 0" v-for="reply in post._reply_list">
+                        <div class="reply_row">
+                            ${reply.reply_content}
+                            <span class="author_time">By ${reply.reply_author} at ${reply.reply_time}</span>
+                        </div>
+                    </div>
+                    <div v-if="post._reply_list.length === 0" class="reply_row">There are no replies</div>
 
                 </div>
                 <!-- Form for replying to a post -->

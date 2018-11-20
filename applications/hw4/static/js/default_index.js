@@ -55,7 +55,6 @@ var app = function() {
         posts = self.vue.post_list
         for(var i = 0; i < length; i++){
             var p = posts[i];
-            console.log(p.id);
             console.log(p);
             $.post(get_thumbs_url, { post_id: p.id }, function (data) {
                 p._total = data.total;
@@ -71,11 +70,9 @@ var app = function() {
                 self.vue.post_list = data.post_list;
                 // Post-processing.
                 self.process_posts();
-                console.log("I got my list");
                 self.get_thumbs();
             }
         );
-        console.log("I fired the get");
     };
 
     self.process_posts = function() {
@@ -106,7 +103,6 @@ var app = function() {
     self.thumbs_up_over = function(post_idx, thumbs_up_idx) {
         var p = self.vue.post_list[post_idx];
         console.log(p, thumbs_up_idx);
-        console.log(p.thumb);
         if(p.thumb === 'd'){
             p._gray_thumb = 'u';
         }
@@ -121,8 +117,6 @@ var app = function() {
 
     self.thumbs_down_over = function(post_idx, thumbs_down_idx) {
         var p = self.vue.post_list[post_idx];
-        console.log(p, thumbs_down_idx);
-        console.log(p.thumb);
         if(p.thumb === 'u'){
             p._gray_thumb = 'd';
         }
@@ -137,7 +131,6 @@ var app = function() {
 
     self.thumbs_up_out = function(post_idx, thumbs_up_idx) {
         var p = self.vue.post_list[post_idx];
-        console.log(p, thumbs_up_idx);
         self.vue.thumbs_up_state = false;
         p._num_thumb_display = p.thumb;
         p._gray_thumb = 'null';
@@ -218,19 +211,28 @@ var app = function() {
 
             });
     }
+    // post_id
     self.editable = function (post_id){
-        var post = self.vue.post_list[post_id]
-        $.get(editable_url,
-            {
-                author: post.post_author
-            }, function(data) {
-                if(data == 'True'){
-                    post._editable = true;
-                } else {
-                    post._editable = false;
-                }
-        });
-        return post._editable;
+        // for(var idx = 0; idx < self.vue.post_list.length; idx++){
+            var post = self.vue.post_list[post_id];
+            if(post._editable !== undefined){
+                return post._editable;
+            }else{
+                $.get(editable_url,
+                    {
+                        author: post.post_author
+                    }, function(data) {
+                        if(data == 'True'){
+                            post._editable = true;
+                        } else {
+                            post._editable = false;
+                        }
+                });
+                return post._editable;
+            }
+        // }
+        // var post = self.vue.post_list[post_id]
+
     }
 
     self.reply = function (post_id) {
@@ -239,7 +241,7 @@ var app = function() {
     }
 
     self.set_reply = function (post_id) {
-        var id = post_id
+        var id = post_id;
         var post = self.vue.post_list[post_id];
         var sent_content = self.vue.reply_content; // Makes a copy
         post._replying = false;
@@ -249,13 +251,15 @@ var app = function() {
             id: post.id,
             reply: self.vue.reply_content
         }, function (data) {
-            console.log(data);
             // Clears the form.
             self.vue.reply_content = "";
+            console.log(data.reply[0]);
             // Adds the post to the list of posts.
             var new_reply = {
-                id: data.reply_id,
-                reply_content: sent_content
+                id: data.reply[0].id,
+                reply_author: data.reply[0].reply_author,
+                reply_content: sent_content,
+                reply_time: data.reply[0].reply_time
             };
             post._reply_list.push(new_reply);
             // We re-enumerate the array.
@@ -266,10 +270,23 @@ var app = function() {
 
     self.process_replies = function(post_id) {
         // We add the _idx attribute to the posts.
-        var post = self.vue.post_list[post_id]
+        var post = self.vue.post_list[post_id];
         enumerate(post._reply_list);
     };
 
+    self.show_replies = function(post_id){
+        var post = self.vue.post_list[post_id];
+        post._show_replies = true;
+        $.get(get_replies_url,
+            {
+                post_id: post.id
+            },
+            function(data){
+                post._reply_list = data.replies;
+            }
+
+        )
+    }
     // Complete as needed.
     self.vue = new Vue({
         el: "#vuediv",
@@ -295,7 +312,8 @@ var app = function() {
             thumbs_down_out: self.thumbs_down_out,
             set_thumb: self.set_thumb,
             reply: self.reply,
-            set_reply: self.set_reply
+            set_reply: self.set_reply,
+            show_replies: self.show_replies
         }
 
     });
