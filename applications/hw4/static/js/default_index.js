@@ -83,7 +83,7 @@ var app = function() {
         // We initialize the smile status to match the like.
 
         self.vue.post_list.map(function (e) {
-            Vue.set(e, '_reply_list', []);
+            Vue.set(e, '_reply_list', []); // list to store replies for each post. This is refreshed everytime show replies button is clicked
             Vue.set(e, '_editing', false); // keeps track of wether or not a post is being edited
             Vue.set(e, '_editable'); // keeps track of who is allowed to edit a post
             Vue.set(e, '_replying', false); // keeps track of wether or not reply form is shown
@@ -187,12 +187,13 @@ var app = function() {
         });
     };
 
+    // this enables a user to edit a post
     self.edit = function(post_id){
         var p = self.vue.post_list[post_id];
         p._editing = true;
-        console.log('edit', p._editing);
     }
 
+    // submits edited information to api.py
     self.edited = function(post_id){
         var p = self.vue.post_list[post_id];
         p._editing = false;
@@ -204,48 +205,41 @@ var app = function() {
             },
             function (data) {
                 console.log(data);
-                // Shows updated post
-                // self.vue.post_list[post_id].post_content = data.post_content;
-                // We re-enumerate the array.
-                // self.process_posts();
-
             });
     }
-    // post_id
-    self.editable = function (post_id){
-        // for(var idx = 0; idx < self.vue.post_list.length; idx++){
-            var post = self.vue.post_list[post_id];
-            if(post._editable !== undefined){
-                return post._editable;
-            }else{
-                $.get(editable_url,
-                    {
-                        author: post.post_author
-                    }, function(data) {
-                        if(data == 'True'){
-                            post._editable = true;
-                        } else {
-                            post._editable = false;
-                        }
-                });
-                return post._editable;
-            }
-        // }
-        // var post = self.vue.post_list[post_id]
 
+    // this determines wether or not a user is allowed to edit a post
+    self.editable = function (post_id){
+        var post = self.vue.post_list[post_id];
+        if(post._editable !== undefined){
+            return post._editable;
+        }else{
+            $.get(editable_url,
+                {
+                    author: post.post_author
+                }, function(data) {
+                    if(data == 'True'){
+                        post._editable = true;
+                    } else {
+                        post._editable = false;
+                    }
+            });
+            return post._editable;
+        }
     }
 
+    // shows form for a user to reply to a post
     self.reply = function (post_id) {
         var post = self.vue.post_list[post_id]
         post._replying = true;
     }
 
+    // submits reply content to api.py to be stored
     self.set_reply = function (post_id) {
         var id = post_id;
         var post = self.vue.post_list[post_id];
         var sent_content = self.vue.reply_content; // Makes a copy
         post._replying = false;
-
         $.post(set_reply_url,
         {
             id: post.id,
@@ -268,12 +262,18 @@ var app = function() {
 
     }
 
+    // process reply list
     self.process_replies = function(post_id) {
         // We add the _idx attribute to the posts.
         var post = self.vue.post_list[post_id];
         enumerate(post._reply_list);
+        post._reply_list.map(function (e) {
+            Vue.set(e, '_editing_reply', false);
+            Vue.set(e, '_editable_reply');
+        });
     };
 
+    // get all replies from the server and show them
     self.show_replies = function(post_id){
         var post = self.vue.post_list[post_id];
         post._show_replies = true;
@@ -283,24 +283,68 @@ var app = function() {
             },
             function(data){
                 post._reply_list = data.replies;
+                self.process_replies(post_id);
             }
 
         )
     }
 
+    // hide all replies from view
     self.hide_replies = function(post_id){
         var post = self.vue.post_list[post_id];
         post._show_replies = false;
     }
 
+    // cancels a reply that is in progress
     self.cancel_reply = function (post_id) {
-        var post = self.vue.post_list[post_id]
+        var post = self.vue.post_list[post_id];
+        self.vue.reply_content = "";
         post._replying = false;
     }
 
-    self.edit_reply = function (post_id, reply_id) {
-        console.log(reply_id);
+    //shows the form to edit replies
+    self.edit_reply = function (post_id, reply_id, reply_idx) {
+        var post = self.vue.post_list[post_id];
+        post._reply_list[reply_idx]._editing_reply = true;
     }
+
+    // submits edited reply info to api.py to be stored and updated
+    self.update_reply = function (post_id, reply_id, reply_idx) {
+        var post = self.vue.post_list[post_id];
+        console.log(post);
+        post._reply_list[reply_idx]._editing_reply = false;
+        var reply = post._reply_list[reply_idx];
+        var reply_content = reply.reply_content;
+        $.post(edit_reply_url,
+        {
+            id: reply_id,
+            reply_content: reply_content
+        }, function (data) {
+            console.log(data);
+        });
+    }
+
+    // checks whether or not a user is allowed to edit a reply
+    self.reply_editable = function (post_id, reply_id, reply_idx){
+        var post = self.vue.post_list[post_id];
+        var reply = post._reply_list[reply_idx];
+        if(reply._editable_reply !== undefined){
+            return reply._editable_reply;
+        }else{
+            $.get(editable_url,
+                {
+                    author: reply.reply_author
+                }, function(data) {
+                    if(data == 'True'){
+                        reply._editable_reply = true;
+                    } else {
+                        reply._editable_reply = false;
+                    }
+            });
+            return reply._editable_reply;
+        }
+    }
+
     // Complete as needed.
     self.vue = new Vue({
         el: "#vuediv",
@@ -312,16 +356,17 @@ var app = function() {
             post_list: [],
             thumbs_list: [],
             isHidden: true,
-            reply_content: ""
+            reply_content: "",
+            edit_form: null,
         },
         methods: {
             add_post: self.add_post,
             cancel_reply: self.cancel_reply,
-            editable: self.editable,
+            editable: self.editable,                    // checks if user can edit post
             show: self.show,
-            edit: self.edit,
-            edited: self.edited,
-            edit_reply: self.edit_reply,
+            edit: self.edit,                            // shows edit post form
+            edited: self.edited,                        // submits edited post info
+            edit_reply: self.edit_reply,                //shows edit reply form
             hide: self.hide,
             hide_replies: self.hide_replies,
             thumbs_up_over: self.thumbs_up_over,
@@ -329,9 +374,11 @@ var app = function() {
             thumbs_up_out: self.thumbs_up_out,
             thumbs_down_out: self.thumbs_down_out,
             set_thumb: self.set_thumb,
-            reply: self.reply,
-            set_reply: self.set_reply,
-            show_replies: self.show_replies
+            reply: self.reply,                          // shows form to reply to posts
+            reply_editable: self.reply_editable,        // checks if a reply is editable by user
+            set_reply: self.set_reply,                  // submits reply to api.py to be stored
+            show_replies: self.show_replies,
+            update_reply: self.update_reply             // submites edited reply to api.py to be updated
         }
 
     });

@@ -78,7 +78,7 @@ def edit_post():
         post_title = title,
         post_content = content
     )
-    return "edit complete"
+    return "post edit complete"
 
 def editable():
     author = request.vars.author
@@ -105,3 +105,12 @@ def get_replies():
     id = request.vars.post_id
     replies = db((db.reply.post_id == id)).select()
     return response.json(dict(replies=replies))
+
+@auth.requires_signature()
+def edit_reply():
+    id = request.vars.id
+    content = request.vars.reply_content
+    db((db.reply.id == id) & (db.reply.reply_author == auth.user.email)).update(
+        reply_content = content
+    )
+    return 'reply edit complete'
